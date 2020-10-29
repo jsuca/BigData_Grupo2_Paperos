@@ -1,0 +1,68 @@
+
+---CREACION DE LA BASE DE DATOS OPERATIONAL---
+CREATE DATABASE OPERATIONAL LOCATION "/user/main/empresas/db/operational";
+
+
+---CREACION DE LA TABLA CLIENTE---
+---FORMATO AVRO / COMPRIMIDO SNAPPY---
+CREATE EXTERNAL TABLE IF NOT EXISTS OPERATIONAL.CLIENTE
+COMMENT 'tabla de clientes formato avro'
+STORED AS AVRO
+TBLPROPERTIES(
+'avro.schema.url' = 'hdfs:///user/main/empresas/schemas/operational/cliente_avro.avsc',
+'avro.output.codec' = 'snappy'
+)
+
+
+---CREACION DE LA TABLA EMPRESA---
+---FORMATO AVRO / COMPRIMIDO SNAPPY---
+CREATE EXTERNAL TABLE IF NOT EXISTS OPERATIONAL.EMPRESA
+COMMENT 'tabla de clientes formato avro'
+STORED AS AVRO
+TBLPROPERTIES(
+'avro.schema.url' = 'hdfs:///user/main/empresas/schemas/operational/empresa_avro.avsc',
+'avro.output.codec' = 'snappy'
+)
+
+
+---CREACION DE LA TABLA TRANSACCIONES---
+---FORMATO PARQUET / COMPRIMIDO SNAPPY---
+CREATE EXTERNAL TABLE IF NOT EXISTS OPERATIONAL.TRANSACCIONES
+(
+ID_PERSONA INT,
+ID_EMPRESA INT,
+MONTO DOUBLE,
+FECHA STRING
+)
+COMMENT 'tabla de transaciones formato PARQUET con formato snappy'
+STORED AS PARQUET
+TBLPROPERTIES ('skip.header.line.count' = '1',
+'parquet.compression' = 'snappy');
+
+
+---SETEO DE PARAMETROS PARA LA CARGA A TABLAS AVRO/SNAPPY---
+set hive.exec.compress.output=true;
+set parquet.compression = snappy;
+
+
+---CARGA DE DATOS A LA BASE DE DATOS OPERATIONAL---
+---AVRO/SNAPPY---
+INSERT OVERWRITE TABLE OPERATIONAL.CLIENTE
+SELECT * FROM LANDING.CLIENTES WHERE NOMBRE != 'NOMBRE';
+
+INSERT OVERWRITE TABLE OPERATIONAL.EMPRESA
+SELECT * FROM LANDING.EMPRESA WHERE EMPRESA != 'NOMBRE';
+
+
+---SETEO DE PARAMETROS PARA LA CARGA A TABLA PARQUET/SNAPPY---
+set hive.exec.compress.output=true;
+set parquet.compression = snappy;
+
+
+---CARGA DE DATOS A LA BASE DE DATOS OPERATIONAL---
+---PARQUET/SNAPPY---
+INSERT OVERWRITE TABLE OPERATIONAL.TRANSACCIONES
+SELECT * FROM LANDING.TRANSACCIONES WHERE ID_PERSONA IS NOT NULL;
+
+
+
